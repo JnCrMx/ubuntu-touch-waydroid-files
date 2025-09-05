@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Main.qml</file>
+        <file>views/FolderListDelegate.qml</file>
+        <file>views/FolderListView.qml</file>
+    </qresource>
+</RCC>

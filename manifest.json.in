@@ -1,0 +1,16 @@
+{
+    "name": "waydroid-files.jcm",
+    "description": "Easily access your Waydroid files!",
+    "architecture": "@CLICK_ARCH@",
+    "title": "Waydroid Files",
+    "hooks": {
+        "waydroid-files": {
+            "apparmor":    "waydroid-files.apparmor",
+            "desktop":     "waydroid-files.desktop",
+            "content-hub": "waydroid-files-contenthub.json"
+        }
+    },
+    "version": "@BUILD_VERSION@",
+    "maintainer": "JCM <jcm@jcm.re>",
+    "framework" : "@CLICK_FRAMEWORK@"
+}
