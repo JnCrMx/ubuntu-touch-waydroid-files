@@ -13,28 +13,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "adb_client.h"
+
+#include <expected>
 
 #include <QDebug>
-#include <QTcpSocket>
 #include <QHostAddress>
+#include <QTcpSocket>
 #include <QTimer>
-#include <expected>
-#include "qcoroabstractsocket.h"
 
-#include "adb_client.h"
+#include <QCoro/QCoroAbstractSocket>
+
+#include <arpa/inet.h>
+#include <sys/stat.h>
 
 ADBClient::ADBClient() {
     m_probeTimer = new QTimer(this);
     m_probeTimer->setInterval(m_probeInterval);
     connect(m_probeTimer, &QTimer::timeout, this, [this]() {
-        probe();
+        co_probe();
     });
     m_probeTimer->start();
 }
 
 enum class ADBProtolError {
     InvalidStatus,
-    InvalidLength,
     TruncatedPayload,
 };
 
@@ -52,11 +55,14 @@ QCoro::Task<std::expected<QByteArray, ADBError>> sendRequest(QTcpSocket& socket,
         co_return std::unexpected(ADBProtolError::InvalidStatus);
     }
 
-    QByteArray len = co_await co_socket.read(4);
+    QByteArray len = co_await co_socket.read(4, std::chrono::milliseconds{1});
     bool okay{};
     int l = len.toInt(&okay, 16);
     if(!okay) {
-        co_return std::unexpected(ADBProtolError::InvalidLength);
+        if(status == "FAIL") {
+            co_return std::unexpected(QByteArray(""));
+        }
+        co_return QByteArray{};
     }
 
     r = co_await co_socket.read(l);
@@ -70,7 +76,7 @@ QCoro::Task<std::expected<QByteArray, ADBError>> sendRequest(QTcpSocket& socket,
     co_return r;
 }
 
-QCoro::Task<void> ADBClient::probe() {
+QCoro::Task<void> ADBClient::co_probe() {
     QTcpSocket socket;
     auto co_socket = qCoro(socket);
 
@@ -79,12 +85,186 @@ QCoro::Task<void> ADBClient::probe() {
         qDebug() << "Failed to connect to ADB server";
         co_return;
     }
-    QByteArray res = (co_await sendRequest(socket, "host:devices")).value();
+    auto res = (co_await sendRequest(socket, "host:get-state"));
+    if(!res) {
+        co_return;
+    }
 
-    if(!res.isEmpty()) {
+    if(*res == "device") {
         emit deviceFound();
         m_probeTimer->stop();
     }
 
     co_return;
+}
+
+struct [[gnu::packed]] sync_dent_rest {
+    uint32_t mode;
+    uint32_t size;
+    uint32_t time;
+    uint32_t namelen;
+};
+struct [[gnu::packed]] sync_stat_rest {
+    uint32_t mode;
+    uint32_t size;
+    uint32_t time;
+};
+
+QCoro::Task<std::vector<ADBFileEntry>> ADBClient::co_listFiles(QString path) {
+    if(!path.endsWith('/')) {
+        path += '/';
+    }
+
+    std::vector<ADBFileEntry> entries;
+
+    QTcpSocket socket;
+    auto co_socket = qCoro(socket);
+
+    bool okay = co_await co_socket.connectToHost(QHostAddress::LocalHost, 5037);
+    if(!okay) {
+        qWarning() << "Failed to connect to ADB server";
+        co_return entries;
+    }
+
+    if(!(co_await sendRequest(socket, "host:transport-any"))) {
+        co_return entries;
+    }
+
+    if(!(co_await sendRequest(socket, "sync:"))) {
+        co_return entries;
+    }
+
+    QByteArray rawPath = path.toUtf8();
+    uint32_t rawPathLen = rawPath.size();
+    QByteArray syncRequest = "LIST" + QByteArray::fromRawData(reinterpret_cast<const char*>(&rawPathLen), sizeof(uint32_t)) + rawPath;
+
+    co_await co_socket.write(syncRequest);
+
+    while(true) {
+        QByteArray status = co_await co_socket.read(4);
+        if(status == "FAIL") {
+            QByteArray len = co_await co_socket.read(4);
+            if(len.size() != 4) {
+                qWarning() << "Protocol error, message length truncated";
+                co_return entries;
+            }
+            uint32_t l = *reinterpret_cast<const uint32_t*>(len.constData());
+            QByteArray msg = co_await co_socket.read(l);
+            qWarning() << "ADB error:" << QString::fromUtf8(msg);
+            co_return entries;
+        } else if(status == "DONE") {
+            QByteArray unused = co_await co_socket.read(sizeof(sync_dent_rest));
+            break;
+        } else if(status == "DENT") {
+            QByteArray dent = co_await co_socket.read(sizeof(sync_dent_rest));
+            if(dent.size() != sizeof(sync_dent_rest)) {
+                qWarning() << "Protocol error, DENT truncated";
+                co_return entries;
+            }
+            const sync_dent_rest* dent_rest = reinterpret_cast<const sync_dent_rest*>(dent.constData());
+            uint32_t namelen = dent_rest->namelen;
+            QByteArray name = co_await co_socket.read(namelen);
+            if(name.size() != static_cast<int>(namelen)) {
+                qWarning() << "Protocol error, name truncated";
+                co_return entries;
+            }
+
+            ADBFileEntry entry;
+            entry.fileName = QString::fromUtf8(name);
+            entry.mode = dent_rest->mode;
+            entry.size = dent_rest->size;
+            entry.time = dent_rest->time;
+            entries.push_back(entry);
+        } else {
+            qWarning() << "Protocol error, invalid status" << status;
+            co_return entries;
+        }
+    }
+
+    co_return entries;
+}
+
+QCoro::Task<std::optional<ADBFileEntry>> ADBClient::co_stat(QString path) {
+    QTcpSocket socket;
+    auto co_socket = qCoro(socket);
+
+    bool okay = co_await co_socket.connectToHost(QHostAddress::LocalHost, 5037);
+    if(!okay) {
+        qWarning() << "Failed to connect to ADB server";
+        co_return std::nullopt;
+    }
+
+    if(!(co_await sendRequest(socket, "host:transport-any"))) {
+        co_return std::nullopt;
+    }
+
+    if(!(co_await sendRequest(socket, "sync:"))) {
+        co_return std::nullopt;
+    }
+
+    QByteArray rawPath = path.toUtf8();
+    uint32_t rawPathLen = rawPath.size();
+    QByteArray syncRequest = "STAT" + QByteArray::fromRawData(reinterpret_cast<const char*>(&rawPathLen), sizeof(uint32_t)) + rawPath;
+
+    co_await co_socket.write(syncRequest);
+
+    QByteArray status = co_await co_socket.read(4);
+    if(status == "FAIL") {
+        QByteArray len = co_await co_socket.read(4);
+        if(len.size() != 4) {
+            qWarning() << "Protocol error, message length truncated";
+            co_return std::nullopt;
+        }
+        uint32_t l = *reinterpret_cast<const uint32_t*>(len.constData());
+        QByteArray msg = co_await co_socket.read(l);
+        qWarning() << "ADB error:" << QString::fromUtf8(msg);
+        co_return std::nullopt;
+    } else if(status == "STAT") {
+        QByteArray dent = co_await co_socket.read(sizeof(sync_stat_rest));
+        if(dent.size() != sizeof(sync_stat_rest)) {
+            qWarning() << "Protocol error, STAT truncated";
+            co_return std::nullopt;
+        }
+        const sync_stat_rest* dent_rest = reinterpret_cast<const sync_stat_rest*>(dent.constData());
+
+        ADBFileEntry entry;
+        entry.fileName = QString::fromUtf8(path.toUtf8().split('/').last());
+        entry.mode = dent_rest->mode;
+        entry.size = dent_rest->size;
+        entry.time = dent_rest->time;
+        co_return entry;
+    } else {
+        qWarning() << "Protocol error, invalid status" << status;
+        co_return std::nullopt;
+    }
+
+    co_return std::nullopt;
+}
+
+QCoro::Task<QString> ADBClient::co_findFirstAccessible(QStringList paths) {
+    for(const QString& path : paths) {
+        auto entry = co_await co_stat(path);
+        if(entry) {
+            co_return path;
+        }
+    }
+    co_return QString();
+}
+QCoro::Task<QString> ADBClient::co_findFirstAccessibleFolder(QStringList paths) {
+    for(const QString& path : paths) {
+        auto entry = co_await co_stat(path);
+        if(entry && S_ISDIR(entry->mode)) {
+            co_return path;
+        }
+    }
+    co_return QString();
+}
+QCoro::Task<QString> ADBClient::co_findFirstAccessibleRegularFile(QStringList paths) {
+    for(const QString& path : paths) {
+        auto entry = co_await co_stat(path);
+        if(entry && S_ISREG(entry->mode)) {
+            co_return path;
+        }
+    }
+    co_return QString();
 }

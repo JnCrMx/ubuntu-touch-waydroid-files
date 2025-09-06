@@ -9,13 +9,14 @@ find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickControls2 REQUIRED)
 
-find_package(QCoro5 COMPONENTS Core Network DBus QUIET)
+find_package(QCoro5 COMPONENTS Core Network Qml QUIET)
 if(NOT QCoro5_FOUND)
     message(STATUS "QCoro5 not found, building it as a submodule")
     set(QCORO_BUILD_EXAMPLES OFF)
     set(QCORO_BUILD_TESTING OFF)
     set(USE_QT_VERSION 5)
     add_subdirectory(libs/qcoro)
+    target_include_directories(QCoro5Core INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/libs/qcoro/core/QCoro>)
 endif()
 qcoro_enable_coroutines()
 
@@ -82,7 +83,6 @@ qt5_add_resources(QT_RESOURCES assets/assets.qrc)
 add_executable(${PROJECT_NAME} main.cpp ${QT_RESOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
 target_link_libraries(${PROJECT_NAME} Qt5::Gui Qt5::Qml Qt5::Quick Qt5::QuickControls2)
-target_link_libraries(${PROJECT_NAME} QCoro5::Core QCoro5::Network QCoro5::DBus)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 # Translations

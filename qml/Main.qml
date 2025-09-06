@@ -38,57 +38,70 @@ MainView {
 
         onDeviceFound: {
             console.log("Connected to ADB server")
-            loader.sourceComponent = folderListView
+
+            loader.item.text = i18n.tr("Locating home folder...")
+            client.findFirstAccessibleFolder(["/sdcard", "/storage/emulated/0", "/home/phablet", "/"]).then(function(path) {
+                console.log("Found accessible folder: " + path)
+                loader.item.text = i18n.tr("Opening folder %1...").arg(path)
+                model.goTo(path).then(function() {
+                    console.log("Loaded initial folder")
+                    loader.sourceComponent = folderListView
+                })
+            })
         }
     }
 
     ADBFolderModel {
         id: model
         adbClient: client
-        basePath: "/sdcard"
+        basePath: "/"
     }
 
-    Page {
+    Loader {
+        id: loader
+        sourceComponent: loadingIndicator
         anchors.fill: parent
+    }
 
-        header: PageHeader {
-            id: header
-            title: i18n.tr('Waydroid Files')
-        }
+    Component {
+        id: loadingIndicator
+        Page {
+            property alias text: loadingText.text
 
-        Loader {
-            id: loader
-            sourceComponent: loadingIndicator
-            anchors {
-                margins: units.gu(2)
-                top: header.bottom
-                left: parent.left
-                right: parent.right
-                bottom: parent.bottom
+            header: PageHeader {
+                id: header
+                title: i18n.tr('Waydroid Files')
+            }
+            ActivityIndicator {
+                anchors.centerIn: parent
+                running: true
+            }
+            Text {
+                id: loadingText
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.verticalCenter
+                anchors.topMargin: units.gu(4)
+                text: i18n.tr("Waiting for device...")
             }
         }
+    }
 
-        Component {
-            id: loadingIndicator
-            Rectangle {
-                ActivityIndicator  {
-                    anchors.centerIn: parent
-                    running: true
-                }
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: parent.verticalCenter
-                    anchors.topMargin: units.gu(4)
-                    text: i18n.tr("Waiting for Waydroid...")
-                }
+    Component {
+        id: folderListView
+        Page {
+            header: PageHeader {
+                id: header
+                title: i18n.tr('TODO')
             }
-        }
-
-        Component {
-            id: folderListView
 
             Views.FolderListView {
-                anchors.fill: parent
+                anchors {
+                    top: header.bottom
+                    left: parent.left
+                    right: parent.right
+                    bottom: parent.bottom
+                }
+
 
                 folderModel: model
             }

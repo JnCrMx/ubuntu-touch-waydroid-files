@@ -13,11 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "plugin.h"
 
 #include <QtQml>
 #include <QtQml/QQmlContext>
 
-#include "plugin.h"
+#include <QCoro/QCoroQml>
+
 #include "adb_client.h"
 #include "adb_folder_model.h"
 
@@ -25,4 +27,5 @@ void ADBPlugin::registerTypes(const char *uri) {
     //@uri ADB
     qmlRegisterType<ADBClient>(uri, 1, 0, "ADBClient");
     qmlRegisterType<ADBFolderModel>(uri, 1, 0, "ADBFolderModel");
+    QCoro::Qml::registerTypes();
 }

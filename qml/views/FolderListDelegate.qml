@@ -27,7 +27,7 @@ ListItem {
     height: layout.height
 
     function getTextSize (subtitle) {
-        switch (globalSettings.listSize) {
+        switch (/*globalSettings.listSize*/ 1) {
         case 0: return Label.Small - (subtitle ? 1 : 0)
         case 1: return Label.Medium - (subtitle ? 1 : 0)
         case 2: return Label.Large - (subtitle ? 1 : 0)
@@ -42,6 +42,7 @@ ListItem {
     property string path
     property bool showProgressionSlot
     property bool isSelected
+    property alias loading: activityIndicator
 
     // Because Flickable is used over ListView??
     // we cannot set the highlight component so
@@ -94,6 +95,12 @@ ListItem {
                 visible: image.visible && del.isVideo
                 name: visible ? delegate.iconName : ""
             }
+        }
+
+
+        ActivityIndicator{
+            id: activityIndicator
+            running: false
         }
 
         ProgressionSlot{

@@ -17,16 +17,31 @@
 #ifndef ADB_FOLDER_MODEL_H
 #define ADB_FOLDER_MODEL_H
 
-#include <QObject>
 #include <QAbstractListModel>
+#include <QMimeType>
+#include <QObject>
+
+#include <QCoro/QCoroQmlTask>
+
 #include "adb_client.h"
 
 class ADBFolderModel : public QAbstractListModel {
     Q_OBJECT
 
     enum Roles {
-        FileNameRole = Qt::UserRole + 1,
-        StylizedFileNameRole
+        FileNameRole = Qt::UserRole,
+        StylizedFileNameRole,
+        IconSourceRole,
+        IconNameRole,
+        FilePathRole,
+        MimeTypeRole,
+        ModifiedDateRole,
+        FileSizeRole,
+        IsBrowsableRole,
+        IsReadableRole,
+        IsWritableRole,
+        IsExecutableRole,
+        FileTypeRole,
     };
 
 public:
@@ -34,35 +49,34 @@ public:
     ~ADBFolderModel() = default;
 
     Q_PROPERTY(ADBClient* adbClient MEMBER m_adbClient)
-    Q_PROPERTY(QString basePath MEMBER m_basePath)
+    Q_PROPERTY(QString basePath MEMBER m_basePath NOTIFY basePathChanged)
     Q_PROPERTY(QString filePath READ filePath NOTIFY filePathChanged)
 
-    Q_INVOKABLE void goTo(const QString& path);
+    Q_INVOKABLE QCoro::QmlTask goTo(const QString& path) {
+        return goToInternal(path);
+    }
 
     const QString& filePath() const { return m_filePath; }
 
-    QHash<int, QByteArray> roleNames() const override {
-        QHash<int, QByteArray> roles;
-        roles.insert(Roles::FileNameRole, "fileName");
-        roles.insert(Roles::StylizedFileNameRole, "stylizedFileName");
-        return roles;
-    }
+    QHash<int, QByteArray> roleNames() const override;
+    int rowCount(const QModelIndex& parent) const override;
+    QVariant data(const QModelIndex& index, int role) const override;
 
-    int rowCount(const QModelIndex& parent) const override {
-        return 0;
-    }
-
-    QVariant data(const QModelIndex& index, int role) const override {
-        return QString{"test"};
-    }
+    QMimeType mimeType(const ADBFileEntry& entry) const;
+    QString iconName(const ADBFileEntry& entry) const;
+    QString fileSize(qint64 size) const;
 signals:
     void filePathChanged();
+    void basePathChanged();
 
 private:
     ADBClient* m_adbClient;
     QString m_basePath = "/";
 
-    QString m_filePath = "/";
+    QString m_filePath = "";
+    std::vector<ADBFileEntry> m_entries{};
+
+    QCoro::Task<void> goToInternal(const QString& path);
 };
 
 #endif

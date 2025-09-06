@@ -19,6 +19,8 @@ import QtQuick 2.7
 import Lomiri.Components 1.3
 import Lomiri.Components.Popups 1.3
 
+import "../components"
+
 ScrollView {
     id: folderListView
 
@@ -48,20 +50,19 @@ ScrollView {
             id: delegate
 
             title: model.stylizedFileName
-            //subtitle: __delegateActions.itemDateAndSize(model)
-            summary: folderModel.getSearchRecursive() && folderModel.getSearchString() ?
-                         model.filePath.toString().replace(folderModel.homePath(), "~") : ""
+            subtitle: __delegateActions.itemDateAndSize(model)
+            //summary: folderModel.basePath + model.filePath.toString()
             iconName: model.iconName
             showProgressionSlot: model.isBrowsable
-            isSelected: model.isSelected
+            //isSelected: model.isSelected
             path: model.filePath
 
-            // property var __delegateActions: FolderDelegateActions {
-            //     folderListPage: folderListView.folderListPage
-            //     folderModel: folderListView.folderModel
-            //     fileOperationDialog: folderListView.fileOperationDialog
-            //     openDefault: folderListView.openDefault
-            // }
+            property var __delegateActions: FolderDelegateActions {
+                folderListPage: folderListView.folderListPage
+                folderModel: folderListView.folderModel
+                fileOperationDialog: folderListView.fileOperationDialog
+                openDefault: folderListView.openDefault
+            }
 
             // leadingActions: ListItemActions {
             //     // Children is an alias for 'actions' property, this way we don't get any warning about non-NOTIFYable props
@@ -73,16 +74,21 @@ ScrollView {
             //     actions: __delegateActions.trailingActions.children
             // }
 
-            // onClicked: __delegateActions.itemClicked(model)
+            onClicked: __delegateActions.itemClicked(model, loading)
             // onPressAndHold: {
             //     folderModel.primSelItem = model
             //     __delegateActions.listLongPress(model)
             // }
         }
 
-        // section.property: "isDir"
-        // section.delegate: SectionDivider {
-        //     text: section == "true" ? i18n.tr("Directories") : i18n.tr("Files")
-        // }
+        section.property: "fileType"
+        section.delegate: SectionDivider {
+            text: (
+                section == "directory" ? i18n.tr("Folders") :
+                section == "file" ? i18n.tr("Files") :
+                seciton == "symlink" ? i18n.tr("Links") :
+                i18n.tr("Other")
+            )
+        }
     }
 }
