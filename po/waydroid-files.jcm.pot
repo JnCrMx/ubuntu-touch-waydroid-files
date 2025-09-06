@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: waydroid-files.jcm\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-05 15:35+0000\n"
+"POT-Creation-Date: 2025-09-06 07:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../qml/Main.qml:51 waydroid-files.desktop.in.h:1
+#: ../qml/Main.qml:56 waydroid-files.desktop.in.h:1
 msgid "Waydroid Files"
+msgstr ""
+
+#: ../qml/Main.qml:82
+msgid "Waiting for Waydroid..."
 msgstr ""

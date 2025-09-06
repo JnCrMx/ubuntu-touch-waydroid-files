@@ -4,5 +4,5 @@
         "content_exchange",
         "content_exchange_source"
     ],
-    "policy_version": 20.04
+    "policy_version": 2404.1
 }

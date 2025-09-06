@@ -35,10 +35,15 @@ MainView {
 
     ADBClient {
         id: client
+
+        onDeviceFound: {
+            console.log("Connected to ADB server")
+            loader.sourceComponent = folderListView
+        }
     }
 
     ADBFolderModel {
-        id: folderModel
+        id: model
         adbClient: client
         basePath: "/sdcard"
     }
@@ -51,8 +56,9 @@ MainView {
             title: i18n.tr('Waydroid Files')
         }
 
-        ColumnLayout {
-            spacing: units.gu(2)
+        Loader {
+            id: loader
+            sourceComponent: loadingIndicator
             anchors {
                 margins: units.gu(2)
                 top: header.bottom
@@ -60,11 +66,31 @@ MainView {
                 right: parent.right
                 bottom: parent.bottom
             }
+        }
+
+        Component {
+            id: loadingIndicator
+            Rectangle {
+                ActivityIndicator  {
+                    anchors.centerIn: parent
+                    running: true
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.verticalCenter
+                    anchors.topMargin: units.gu(4)
+                    text: i18n.tr("Waiting for Waydroid...")
+                }
+            }
+        }
+
+        Component {
+            id: folderListView
 
             Views.FolderListView {
                 anchors.fill: parent
 
-                folderModel: folderModel
+                folderModel: model
             }
         }
     }

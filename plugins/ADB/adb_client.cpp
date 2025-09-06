@@ -16,13 +16,75 @@
 
 #include <QDebug>
 #include <QTcpSocket>
+#include <QHostAddress>
+#include <QTimer>
+#include <expected>
+#include "qcoroabstractsocket.h"
 
 #include "adb_client.h"
 
-ADBClient::ADBClient() : socket(new QTcpSocket{this}) {
-    stream.setDevice(socket);
+ADBClient::ADBClient() {
+    m_probeTimer = new QTimer(this);
+    m_probeTimer->setInterval(m_probeInterval);
+    connect(m_probeTimer, &QTimer::timeout, this, [this]() {
+        probe();
+    });
+    m_probeTimer->start();
 }
 
-bool ADBClient::is_device_connected() {
-    return false;
+enum class ADBProtolError {
+    InvalidStatus,
+    InvalidLength,
+    TruncatedPayload,
+};
+
+using ADBError = std::variant<QByteArray, ADBProtolError>;
+using ADBResult = std::expected<QByteArray, ADBError>;
+
+QCoro::Task<std::expected<QByteArray, ADBError>> sendRequest(QTcpSocket& socket, const QByteArray& req) {
+    QByteArray r = QString::number(req.size(), 16).rightJustified(4, '0').toUtf8() + req;
+
+    auto co_socket = qCoro(socket);
+    co_await co_socket.write(r);
+
+    QByteArray status = co_await co_socket.read(4);
+    if(status != "OKAY" && status != "FAIL") {
+        co_return std::unexpected(ADBProtolError::InvalidStatus);
+    }
+
+    QByteArray len = co_await co_socket.read(4);
+    bool okay{};
+    int l = len.toInt(&okay, 16);
+    if(!okay) {
+        co_return std::unexpected(ADBProtolError::InvalidLength);
+    }
+
+    r = co_await co_socket.read(l);
+    if(r.size() != l) {
+        co_return std::unexpected(ADBProtolError::TruncatedPayload);
+    }
+
+    if(status == "FAIL") {
+        co_return std::unexpected(r);
+    }
+    co_return r;
+}
+
+QCoro::Task<void> ADBClient::probe() {
+    QTcpSocket socket;
+    auto co_socket = qCoro(socket);
+
+    bool okay = co_await co_socket.connectToHost(QHostAddress::LocalHost, 5037);
+    if(!okay) {
+        qDebug() << "Failed to connect to ADB server";
+        co_return;
+    }
+    QByteArray res = (co_await sendRequest(socket, "host:devices")).value();
+
+    if(!res.isEmpty()) {
+        emit deviceFound();
+        m_probeTimer->stop();
+    }
+
+    co_return;
 }

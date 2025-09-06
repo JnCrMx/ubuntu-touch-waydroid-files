@@ -20,6 +20,10 @@
 #include <QObject>
 #include <QDataStream>
 
+#include "qcoro/qcorotask.h"
+
+class QTimer;
+
 class ADBClient : public QObject {
     Q_OBJECT
 
@@ -27,10 +31,14 @@ public:
     ADBClient();
     ~ADBClient() = default;
 
-    Q_INVOKABLE bool is_device_connected();
+    Q_PROPERTY(int probeInterval MEMBER m_probeInterval)
+signals:
+    void deviceFound();
 private:
-    class QTcpSocket* socket = nullptr;
-    QDataStream stream{};
+    QTimer* m_probeTimer = nullptr;
+    int m_probeInterval = 1000;
+
+    QCoro::Task<void> probe();
 };
 
 #endif

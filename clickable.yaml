@@ -1,3 +1,13 @@
-clickable_minimum_required: 8.0.0
+clickable_minimum_required: 8.3.0
 builder: cmake
 kill: waydroid-files
+framework: ubuntu-touch-24.04-1.x
+ignore_review_warnings: true # The framework is prereleased, so it causes a warning
+libraries:
+  qcoro:
+    builder: cmake
+    build_args: [
+      -DQCORO_BUILD_EXAMPLES=OFF,
+      -DQCORO_BUILD_TESTING=OFF,
+      -DUSE_QT_VERSION=5
+    ]
