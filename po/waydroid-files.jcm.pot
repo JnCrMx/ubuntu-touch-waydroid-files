@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: waydroid-files.jcm\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-06 16:42+0000\n"
+"POT-Creation-Date: 2025-09-07 03:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,47 +17,51 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../qml/Main.qml:42
+#: ../qml/Main.qml:43
 msgid "Locating home folder..."
 msgstr ""
 
-#: ../qml/Main.qml:45
+#: ../qml/Main.qml:46
 msgid "Opening folder %1..."
 msgstr ""
 
-#: ../qml/Main.qml:73 waydroid-files.desktop.in.h:1
+#: ../qml/Main.qml:89 waydroid-files.desktop.in.h:1
 msgid "Waydroid Files"
 msgstr ""
 
-#: ../qml/Main.qml:84
+#: ../qml/Main.qml:100
 msgid "Waiting for device..."
 msgstr ""
 
-#: ../qml/Main.qml:94
+#: ../qml/Main.qml:130
 msgid "TODO"
 msgstr ""
 
-#: ../qml/views/FolderDelegateActions.qml:41
+#: ../qml/content-hub/FileOpener.qml:29
+msgid "Open with"
+msgstr ""
+
+#: ../qml/views/FolderDelegateActions.qml:42
 msgid "Folder not accessible"
 msgstr ""
 
 #. TRANSLATORS: this refers to a folder name
-#: ../qml/views/FolderDelegateActions.qml:43
+#: ../qml/views/FolderDelegateActions.qml:44
 msgid "Can not access %1"
 msgstr ""
 
-#: ../qml/views/FolderListView.qml:87
+#: ../qml/views/FolderListView.qml:89
 msgid "Folders"
 msgstr ""
 
-#: ../qml/views/FolderListView.qml:88
+#: ../qml/views/FolderListView.qml:90
 msgid "Files"
 msgstr ""
 
-#: ../qml/views/FolderListView.qml:89
+#: ../qml/views/FolderListView.qml:91
 msgid "Links"
 msgstr ""
 
-#: ../qml/views/FolderListView.qml:90
+#: ../qml/views/FolderListView.qml:92
 msgid "Other"
 msgstr ""

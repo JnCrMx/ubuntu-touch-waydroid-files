@@ -18,9 +18,13 @@
 #include <expected>
 
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QHostAddress>
+#include <QStandardPaths>
 #include <QTcpSocket>
 #include <QTimer>
+#include <QUrl>
 
 #include <QCoro/QCoroAbstractSocket>
 
@@ -108,6 +112,9 @@ struct [[gnu::packed]] sync_stat_rest {
     uint32_t mode;
     uint32_t size;
     uint32_t time;
+};
+struct [[gnu::packed]] sync_data_rest {
+    uint32_t size;
 };
 
 QCoro::Task<std::vector<ADBFileEntry>> ADBClient::co_listFiles(QString path) {
@@ -239,6 +246,103 @@ QCoro::Task<std::optional<ADBFileEntry>> ADBClient::co_stat(QString path) {
     }
 
     co_return std::nullopt;
+}
+
+QCoro::Task<QUrl> ADBClient::co_pullFile(QString path) {
+    QTcpSocket socket;
+    auto co_socket = qCoro(socket);
+
+    bool okay = co_await co_socket.connectToHost(QHostAddress::LocalHost, 5037);
+    if(!okay) {
+        qWarning() << "Failed to connect to ADB server";
+        co_return {};
+    }
+
+    if(!(co_await sendRequest(socket, "host:transport-any"))) {
+        co_return {};
+    }
+
+    if(!(co_await sendRequest(socket, "sync:"))) {
+        co_return {};
+    }
+
+    QByteArray rawPath = path.toUtf8();
+    uint32_t rawPathLen = rawPath.size();
+    QByteArray syncRequest = "RECV" + QByteArray::fromRawData(reinterpret_cast<const char*>(&rawPathLen), sizeof(uint32_t)) + rawPath;
+
+    co_await co_socket.write(syncRequest);
+
+    QString destinationFolder = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/PulledFiles";
+    if(!QDir{destinationFolder}.mkpath(".")) {
+        qWarning() << "Failed to create destination folder:" << destinationFolder;
+        co_return {};
+    }
+    QFile file{destinationFolder + "/" + path.split('/').last()};
+    if(!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Failed to open file for writing:" << file.fileName();
+        co_return {};
+    }
+
+    while(true) {
+        QByteArray status = co_await co_socket.read(4);
+        if(status == "FAIL") {
+            file.close();
+            file.remove();
+
+            QByteArray len = co_await co_socket.read(4);
+            if(len.size() != 4) {
+                qWarning() << "Protocol error, message length truncated";
+                co_return {};
+            }
+            uint32_t l = *reinterpret_cast<const uint32_t*>(len.constData());
+            QByteArray msg = co_await co_socket.read(l);
+            qWarning() << "ADB error:" << QString::fromUtf8(msg);
+            co_return {};
+        } else if(status == "DONE") {
+            QByteArray unused = co_await co_socket.read(sizeof(sync_data_rest));
+            break;
+        } else if(status == "DATA") {
+            QByteArray data = co_await co_socket.read(sizeof(sync_data_rest));
+            if(data.size() != sizeof(sync_data_rest)) {
+                qWarning() << "Protocol error, DATA truncated";
+
+                file.close();
+                file.remove();
+                co_return {};
+            }
+            const sync_data_rest* data_rest = reinterpret_cast<const sync_data_rest*>(data.constData());
+            uint32_t size = data_rest->size;
+            QByteArray filedata{};
+            do {
+                filedata += co_await co_socket.read(size - filedata.size());
+            } while(filedata.size() < static_cast<int>(size));
+            if(filedata.size() != static_cast<int>(size)) {
+                qWarning() << "Protocol error, DATA payload wrong size, expected" << size << "got" << filedata.size();
+
+                file.close();
+                file.remove();
+                co_return {};
+            }
+
+            file.write(filedata);
+        } else {
+            qWarning() << "Protocol error, invalid status" << status;
+
+            file.close();
+            file.remove();
+        }
+    }
+    file.close();
+
+    co_return QUrl::fromLocalFile(file.fileName());
+}
+
+void ADBClient::cleanupPulledFiles() {
+    QString destinationFolder = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/PulledFiles";
+    QDir dir{destinationFolder};
+    if(dir.exists()) {
+        dir.removeRecursively();
+    }
 }
 
 QCoro::Task<QString> ADBClient::co_findFirstAccessible(QStringList paths) {

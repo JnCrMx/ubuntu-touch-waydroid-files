@@ -15,6 +15,8 @@
  */
 #include "adb_folder_model.h"
 
+#include <filesystem>
+
 #include <QDateTime>
 #include <QDebug>
 #include <QMimeDatabase>
@@ -32,6 +34,7 @@ QHash<int, QByteArray> ADBFolderModel::roleNames() const {
     roles[Roles::IconSourceRole] = "iconSource";
     roles[Roles::IconNameRole] = "iconName";
     roles[Roles::FilePathRole] = "filePath";
+    roles[Roles::FilePathFullRole] = "filePathFull";
     roles[Roles::MimeTypeRole] = "mimeType";
     roles[Roles::ModifiedDateRole] = "modifiedDate";
     roles[Roles::FileSizeRole] = "fileSize";
@@ -69,6 +72,13 @@ QVariant ADBFolderModel::data(const QModelIndex& index, int role) const {
             return iconName(entry);
         case Roles::FilePathRole:
             return (m_filePath.isEmpty() || m_filePath.endsWith("/")) ? m_filePath + entry.fileName : m_filePath + "/" + entry.fileName;
+        case Roles::FilePathFullRole: {
+            std::filesystem::path p = m_basePath.toStdString();
+            p /= m_filePath.toStdString();
+            p /= entry.fileName.toStdString();
+            p = std::filesystem::weakly_canonical(p);
+            return QString::fromStdString(p.string());
+        }
         case Roles::MimeTypeRole: {
             auto type = mimeType(entry);
             return type.isValid() ? type.name() : QString{};

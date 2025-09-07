@@ -28,6 +28,7 @@ ScrollView {
     property var fileOperationDialog
     property var folderModel
     property var openDefault
+    property var openFile
 
     property alias footer: root.footer
     property alias header: root.header
@@ -62,6 +63,7 @@ ScrollView {
                 folderModel: folderListView.folderModel
                 fileOperationDialog: folderListView.fileOperationDialog
                 openDefault: folderListView.openDefault
+                openFile: folderListView.openFile
             }
 
             // leadingActions: ListItemActions {

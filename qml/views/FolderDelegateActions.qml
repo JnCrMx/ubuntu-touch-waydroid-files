@@ -12,6 +12,7 @@ QtObject {
     property var folderModel
     property var fileOperationDialog
     property var openDefault
+    property var openFile
 
     function listLongPress(model) {
         fileSelectorMode = true
@@ -50,32 +51,34 @@ QtObject {
 
         else {  // Item is file
             console.log("Non dir clicked")
-            var path = model.filePath
-            var archiveType = folderModel.getArchiveType(model.fileName)
+            var path = model.filePathFull
+            //var archiveType = folderModel.getArchiveType(model.fileName)
             console.log(path)
             console.log(model.mimeType)
 
-            if (fileSelectorMode) {
-                folderModel.model.selectionObject.select(model.index,false,true)
-            } else if (!folderSelectorMode){
-                if (openDefault) {
-                    if (model.mimeType.indexOf("image/") != -1) {
-                        Qt.openUrlExternally("photo://" + path)
-                    } else if (model.mimeType.indexOf("audio/") != -1) {
-                        Qt.openUrlExternally("music://" + path)
-                    } else if (model.mimeType.indexOf("video/") != -1) {
-                        Qt.openUrlExternally("video://" + path)
-                    } else if (model.mimeType.indexOf("pdf") != -1 || model.mimeType.indexOf("vnd") != -1) {
-                        Qt.openUrlExternally("document://" + path)
-                    } else if (archiveType !== "") {
-                        folderListPage.openFile(model, true)
-                    } else {
-                        openAdvanced(model)
-                    }
-                } else {
-                    openAdvanced(model)
-                }
-            }
+            openFile(path)
+
+            // if (fileSelectorMode) {
+            //     folderModel.model.selectionObject.select(model.index,false,true)
+            // } else if (!folderSelectorMode){
+            //     if (openDefault) {
+            //         if (model.mimeType.indexOf("image/") != -1) {
+            //             Qt.openUrlExternally("photo://" + path)
+            //         } else if (model.mimeType.indexOf("audio/") != -1) {
+            //             Qt.openUrlExternally("music://" + path)
+            //         } else if (model.mimeType.indexOf("video/") != -1) {
+            //             Qt.openUrlExternally("video://" + path)
+            //         } else if (model.mimeType.indexOf("pdf") != -1 || model.mimeType.indexOf("vnd") != -1) {
+            //             Qt.openUrlExternally("document://" + path)
+            //         } else if (archiveType !== "") {
+            //             folderListPage.openFile(model, true)
+            //         } else {
+            //             openAdvanced(model)
+            //         }
+            //     } else {
+            //         openAdvanced(model)
+            //     }
+            // }
         }
     }
 

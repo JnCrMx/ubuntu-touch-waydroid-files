@@ -19,6 +19,7 @@ import QtQuick.Controls 2.2
 import Lomiri.Components 1.3
 import QtQuick.Layouts 1.3
 import Qt.labs.settings 1.0
+import Lomiri.Content 1.3
 
 import ADB 1.0
 
@@ -57,6 +58,21 @@ MainView {
         basePath: "/"
     }
 
+    function startTransfer(activeTransfer, importMode) {
+        console.log(activeTransfer)
+        console.log(activeTransfer.state)
+        console.log(activeTransfer.items[0].text)
+        console.log(activeTransfer.items[0].url)
+        console.log(importMode)
+    }
+
+    Connections {
+        target: ContentHub
+        onExportRequested: startTransfer(transfer, false)
+        onImportRequested: startTransfer(transfer, true)
+        onShareRequested: startTransfer(transfer, true)
+    }
+
     Loader {
         id: loader
         sourceComponent: loadingIndicator
@@ -88,22 +104,43 @@ MainView {
 
     Component {
         id: folderListView
-        Page {
-            header: PageHeader {
-                id: header
-                title: i18n.tr('TODO')
+
+        PageStack {
+            id: pageStack
+
+            function openFile(path) {
+                pageStack.push(Qt.resolvedUrl("content-hub/FileOpener.qml"), {
+                    adbClient: client,
+                    devicePath: path,
+                    share: false,
+                    cleanup: true
+                })
             }
 
-            Views.FolderListView {
-                anchors {
-                    top: header.bottom
-                    left: parent.left
-                    right: parent.right
-                    bottom: parent.bottom
+            Component.onCompleted: {
+                pageStack.push(folderListPage)
+            }
+
+            Page {
+                id: folderListPage
+                visible: false
+
+                header: PageHeader {
+                    id: header
+                    title: i18n.tr('TODO')
                 }
 
+                Views.FolderListView {
+                    anchors {
+                        top: header.bottom
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
 
-                folderModel: model
+                    folderModel: model
+                    openFile: pageStack.openFile
+                }
             }
         }
     }

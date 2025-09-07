@@ -18,7 +18,7 @@
 #define ADB_CLIENT_H
 
 #include <QObject>
-#include <QDataStream>
+#include <QUrl>
 
 #include <QCoro/QCoroCore>
 #include <QCoro/QCoroQmlTask>
@@ -47,6 +47,7 @@ public:
     QCoro::Task<QString> co_findFirstAccessible(QStringList paths);
     QCoro::Task<QString> co_findFirstAccessibleFolder(QStringList paths);
     QCoro::Task<QString> co_findFirstAccessibleRegularFile(QStringList paths);
+    QCoro::Task<QUrl> co_pullFile(QString path);
 
     // Q_INVOKABLE QCoro::QmlTask stat(const QString& path) {
     //     return co_stat(path);
@@ -63,6 +64,10 @@ public:
     Q_INVOKABLE QCoro::QmlTask findFirstAccessibleRegularFile(const QStringList& paths) {
         return co_findFirstAccessibleRegularFile(paths);
     }
+    Q_INVOKABLE QCoro::QmlTask pullFile(const QString& path) {
+        return co_pullFile(path);
+    }
+    Q_INVOKABLE void cleanupPulledFiles();
 signals:
     void deviceFound();
 private:

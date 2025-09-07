@@ -34,6 +34,7 @@ class ADBFolderModel : public QAbstractListModel {
         IconSourceRole,
         IconNameRole,
         FilePathRole,
+        FilePathFullRole,
         MimeTypeRole,
         ModifiedDateRole,
         FileSizeRole,
