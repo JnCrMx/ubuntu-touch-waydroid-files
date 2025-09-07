@@ -1,8 +1,12 @@
 <RCC>
     <qresource prefix="/">
         <file>Main.qml</file>
+        <file>components/HorizontalDivider.qml</file>
+        <file>components/PathHistoryRow.qml</file>
         <file>components/SectionDivider.qml</file>
+        <file>content-hub/contenttyperesolver.js</file>
         <file>content-hub/FileOpener.qml</file>
+        <file>ui/PathHistoryToolbar.qml</file>
         <file>views/FolderDelegateActions.qml</file>
         <file>views/FolderListDelegate.qml</file>
         <file>views/FolderListView.qml</file>

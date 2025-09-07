@@ -20,12 +20,16 @@
 #include <QString>
 #include <QQuickView>
 
+#include "patharrowbackground.h"
+
 int main(int argc, char *argv[])
 {
     QGuiApplication *app = new QGuiApplication(argc, (char**)argv);
     app->setApplicationName("waydroid-files.jcm");
 
     qDebug() << "Starting app from main.cpp";
+
+    qmlRegisterType<PathArrowBackground>("waydroidfiles.jcm", 1, 0, "PathArrowBackground");
 
     QQuickView *view = new QQuickView();
     view->setSource(QUrl("qrc:/Main.qml"));

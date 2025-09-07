@@ -21,6 +21,8 @@ import Lomiri.Content 1.3
 
 import ADB 1.0
 
+import "contenttyperesolver.js" as Resolver
+
 Page {
     id: root
 
@@ -40,7 +42,9 @@ Page {
     property bool transferInProgress: false
 
     Component.onCompleted: {
-
+        var contentType = Resolver.resolveContentType(devicePath)
+        console.log("Resolved contenttype: " + contentType)
+        peerPicker.contentType = contentType
     }
 
     Component {

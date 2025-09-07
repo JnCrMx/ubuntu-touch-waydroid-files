@@ -51,13 +51,13 @@ public:
 
     Q_PROPERTY(ADBClient* adbClient MEMBER m_adbClient)
     Q_PROPERTY(QString basePath MEMBER m_basePath NOTIFY basePathChanged)
-    Q_PROPERTY(QString filePath READ filePath NOTIFY filePathChanged)
+    Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
 
     Q_INVOKABLE QCoro::QmlTask goTo(const QString& path) {
         return goToInternal(path);
     }
 
-    const QString& filePath() const { return m_filePath; }
+    const QString& currentPath() const { return m_currentPath; }
 
     QHash<int, QByteArray> roleNames() const override;
     int rowCount(const QModelIndex& parent) const override;
@@ -67,14 +67,14 @@ public:
     QString iconName(const ADBFileEntry& entry) const;
     QString fileSize(qint64 size) const;
 signals:
-    void filePathChanged();
+    void currentPathChanged();
     void basePathChanged();
 
 private:
     ADBClient* m_adbClient;
     QString m_basePath = "/";
 
-    QString m_filePath = "";
+    QString m_currentPath = "";
     std::vector<ADBFileEntry> m_entries{};
 
     QCoro::Task<void> goToInternal(const QString& path);

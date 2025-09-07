@@ -71,10 +71,10 @@ QVariant ADBFolderModel::data(const QModelIndex& index, int role) const {
         case Roles::IconNameRole:
             return iconName(entry);
         case Roles::FilePathRole:
-            return (m_filePath.isEmpty() || m_filePath.endsWith("/")) ? m_filePath + entry.fileName : m_filePath + "/" + entry.fileName;
+            return (m_currentPath.isEmpty() || m_currentPath.endsWith("/")) ? m_currentPath + entry.fileName : m_currentPath + "/" + entry.fileName;
         case Roles::FilePathFullRole: {
             std::filesystem::path p = m_basePath.toStdString();
-            p /= m_filePath.toStdString();
+            p /= m_currentPath.toStdString();
             p /= entry.fileName.toStdString();
             p = std::filesystem::weakly_canonical(p);
             return QString::fromStdString(p.string());
@@ -172,9 +172,9 @@ QString ADBFolderModel::fileSize(qint64 size) const
 }
 
 QCoro::Task<void> ADBFolderModel::goToInternal(const QString& path) {
-    if(path != m_filePath) {
-        m_filePath = path;
-        emit filePathChanged();
+    if(path != m_currentPath) {
+        m_currentPath = path;
+        emit currentPathChanged();
     }
     if(!m_adbClient) {
         co_return;

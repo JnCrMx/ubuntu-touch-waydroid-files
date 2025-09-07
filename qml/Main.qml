@@ -23,7 +23,8 @@ import Lomiri.Content 1.3
 
 import ADB 1.0
 
-import "views" as Views
+import "views"
+import "ui"
 
 MainView {
     id: root
@@ -125,12 +126,12 @@ MainView {
                 id: folderListPage
                 visible: false
 
-                header: PageHeader {
+                header: PathHistoryToolbar {
                     id: header
-                    title: i18n.tr('TODO')
+                    folderModel: model
                 }
 
-                Views.FolderListView {
+                FolderListView {
                     anchors {
                         top: header.bottom
                         left: parent.left

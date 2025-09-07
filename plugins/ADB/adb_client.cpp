@@ -38,6 +38,8 @@ ADBClient::ADBClient() {
         co_probe();
     });
     m_probeTimer->start();
+
+    co_probe(); // immediate first probe to reduce wait time
 }
 
 enum class ADBProtolError {

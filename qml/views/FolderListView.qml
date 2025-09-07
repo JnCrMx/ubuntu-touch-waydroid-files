@@ -42,7 +42,7 @@ ScrollView {
         PullToRefresh {
             onRefresh: {
                 refreshing = true
-                folderModel.goTo(folderModel.filePath)
+                folderModel.goTo(folderModel.currentPath)
                 refreshing = false
             }
         }
@@ -52,7 +52,7 @@ ScrollView {
 
             title: model.stylizedFileName
             subtitle: __delegateActions.itemDateAndSize(model)
-            //summary: folderModel.basePath + model.filePath.toString()
+            //summary: folderModel.basePath + model.currentPath.toString()
             iconName: model.iconName
             showProgressionSlot: model.isBrowsable
             //isSelected: model.isSelected
