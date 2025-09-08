@@ -48,6 +48,8 @@ public:
     QCoro::Task<QString> co_findFirstAccessibleFolder(QStringList paths);
     QCoro::Task<QString> co_findFirstAccessibleRegularFile(QStringList paths);
     QCoro::Task<QUrl> co_pullFile(QString path);
+    QCoro::Task<bool> co_pushFile(QString hostPath, QString devicePath, mode_t mode = 0644);
+    QCoro::Task<bool> co_pushFileFromUrl(QUrl hostUrl, QString devicePath, mode_t mode = 0644);
 
     // Q_INVOKABLE QCoro::QmlTask stat(const QString& path) {
     //     return co_stat(path);
@@ -66,6 +68,12 @@ public:
     }
     Q_INVOKABLE QCoro::QmlTask pullFile(const QString& path) {
         return co_pullFile(path);
+    }
+    Q_INVOKABLE QCoro::QmlTask pushFile(const QString& hostPath, const QString& devicePath, int mode = 0644) {
+        return co_pushFile(hostPath, devicePath, mode);
+    }
+    Q_INVOKABLE QCoro::QmlTask pushFileFromUrl(const QUrl& hostUrl, const QString& devicePath, int mode = 0644) {
+        return co_pushFileFromUrl(hostUrl, devicePath, mode);
     }
     Q_INVOKABLE void cleanupPulledFiles();
 signals:

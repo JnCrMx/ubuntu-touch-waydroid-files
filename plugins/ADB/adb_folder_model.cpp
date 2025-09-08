@@ -32,6 +32,14 @@ ADBFolderModel::ADBFolderModel() {
         m_currentPath.clear();
         emit currentPathChanged();
     });
+    connect(this, &ADBFolderModel::currentPathChanged, this, [this]() {
+        m_selectedFile.clear();
+        emit selectedFileChanged();
+    });
+    connect(this, &ADBFolderModel::selectedFileChanged, this, [this]() {
+        qDebug() << "Selected file changed to" << m_selectedFile;
+        emit dataChanged(index(0, 0), index(rowCount({}) - 1, 0), {Roles::IsSelectedRole});
+    });
 }
 
 QHash<int, QByteArray> ADBFolderModel::roleNames() const {
@@ -50,6 +58,7 @@ QHash<int, QByteArray> ADBFolderModel::roleNames() const {
     roles[Roles::IsWritableRole] = "isWritable";
     roles[Roles::IsExecutableRole] = "isExecutable";
     roles[Roles::FileTypeRole] = "fileType";
+    roles[Roles::IsSelectedRole] = "isSelected";
     return roles;
 }
 int ADBFolderModel::rowCount(const QModelIndex& parent) const {
@@ -112,6 +121,8 @@ QVariant ADBFolderModel::data(const QModelIndex& index, int role) const {
             } else {
                 return "other";
             }
+        case Roles::IsSelectedRole:
+            return m_selectedFile == data(index, Roles::FilePathFullRole).toString();
         default:
             return {};
     }

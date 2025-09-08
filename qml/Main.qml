@@ -35,6 +35,9 @@ MainView {
     width: units.gu(45)
     height: units.gu(75)
 
+    property var activeTransfer: null
+    property string mode: "normal" // normal, import, export
+
     ADBClient {
         id: client
 
@@ -60,11 +63,74 @@ MainView {
     }
 
     function startTransfer(activeTransfer, importMode) {
-        console.log(activeTransfer)
-        console.log(activeTransfer.state)
-        console.log(activeTransfer.items[0].text)
-        console.log(activeTransfer.items[0].url)
-        console.log(importMode)
+        root.activeTransfer = activeTransfer
+        root.mode = importMode ? "import" : "export"
+        console.log("Starting transfer in mode " + root.mode + ": " + JSON.stringify(activeTransfer))
+    }
+    function finishTransfer() {
+        root.mode = "normal"
+        model.selectedFile = ""
+        root.activeTransfer = null
+        Qt.quit()
+    }
+
+    Component {
+        id: resultComponent
+        ContentItem {}
+    }
+    function exportFile(path) {
+        console.log("Exporting file", path)
+        root.activeTransfer.stateChanged.connect(function() {
+            console.log("export transfer state changed: " + root.activeTransfer.state);
+            if(root.activeTransfer.state === ContentTransfer.Finalized || root.activeTransfer.state === ContentTransfer.Aborted) {
+                client.cleanupPulledFiles();
+
+                finishTransfer()
+            }
+        });
+        client.pullFile(path).then(function(url) {
+            if(!url) {
+                console.log("Pull failed, aborting transfer");
+                root.activeTransfer.state = ContentTransfer.Aborted;
+                return;
+            }
+            console.log("Pulled file to " + url);
+            root.activeTransfer.items = [ resultComponent.createObject(root, {"url": url}) ];
+            root.activeTransfer.state = ContentTransfer.Charged;
+        })
+    }
+    function importFile(path) {
+        console.log("Importing file to ", path)
+        let hostUrl = root.activeTransfer.items.length > 0 ? root.activeTransfer.items[0].url : null
+        if(!hostUrl || !hostUrl.toString().startsWith("file://")) {
+            console.log("Invalid URL, aborting transfer");
+            root.activeTransfer.state = ContentTransfer.Aborted;
+            finishTransfer()
+            return;
+        }
+        let filename = hostUrl.toString().substring(7).split("/").pop()
+        let devicePath = path + (path.endsWith("/") ? "" : "/") + filename
+        console.log("Importing file " + hostUrl + " to device path " + devicePath)
+        // TODO: check if file exists and ask for overwrite
+        root.activeTransfer.stateChanged.connect(function() {
+            console.log("import transfer state changed: " + root.activeTransfer.state);
+            if(root.activeTransfer.state === ContentTransfer.Finalized || root.activeTransfer.state === ContentTransfer.Aborted) {
+                finishTransfer()
+            }
+        });
+        client.pushFileFromUrl(hostUrl, devicePath).then(function(success) {
+            if(!success) {
+                console.log("Push failed, aborting transfer");
+                // TODO: show error message
+                root.activeTransfer.state = ContentTransfer.Aborted;
+                return;
+            }
+            // TODO: show success message
+            console.log("Pushed file to " + devicePath);
+            root.activeTransfer.finalize();
+
+            model.goTo(path); // refresh current folder
+        });
     }
 
     Connections {
@@ -118,6 +184,32 @@ MainView {
             onTriggered: model.goForward()
             enabled: model.canGoForward
         }
+        Action {
+            id: actionCancel
+            iconName: "close"
+            text: i18n.tr("Cancel")
+            enabled: root.mode !== "normal"
+            onTriggered: {
+                root.activeTransfer.state = ContentTransfer.Aborted
+                finishTransfer()
+            }
+        }
+        Action {
+            id: actionSelect
+            iconName: "ok"
+            text: i18n.tr("Select")
+            enabled: root.mode !== "normal" && (
+                root.mode === "import" ||
+                root.mode === "export" && model.selectedFile !== ""
+            )
+            onTriggered: {
+                if(mode === "export") {
+                    exportFile(model.selectedFile)
+                } else if(mode === "import") {
+                    importFile(model.currentPath)
+                }
+            }
+        }
     }
 
     Component {
@@ -127,12 +219,21 @@ MainView {
             id: pageStack
 
             function openFile(path) {
-                pageStack.push(Qt.resolvedUrl("content-hub/FileOpener.qml"), {
-                    adbClient: client,
-                    devicePath: path,
-                    share: false,
-                    cleanup: true
-                })
+                console.log("Opening file", path, "in mode", mode)
+                if(mode === "normal") {
+                    pageStack.push(Qt.resolvedUrl("content-hub/FileOpener.qml"), {
+                        adbClient: client,
+                        devicePath: path,
+                        share: false,
+                        cleanup: true
+                    })
+                } else if(mode === "export") {
+                    if(model.selectedFile === path) {
+                        model.selectedFile = ""
+                    } else {
+                        model.selectedFile = path
+                    }
+                }
             }
 
             Component.onCompleted: {
@@ -148,6 +249,7 @@ MainView {
                     folderModel: model
 
                     leadingActionBar.actions: [ actionGoForward, actionGoBack ]
+                    trailingActionBar.actions: root.mode === "normal" ? [] : [ actionCancel, actionSelect ]
                 }
 
                 FolderListView {

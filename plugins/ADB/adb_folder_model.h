@@ -43,6 +43,7 @@ class ADBFolderModel : public QAbstractListModel {
         IsWritableRole,
         IsExecutableRole,
         FileTypeRole,
+        IsSelectedRole,
     };
 
 public:
@@ -55,6 +56,8 @@ public:
 
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY currentPathChanged)
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY currentPathChanged)
+
+    Q_PROPERTY(QString selectedFile MEMBER m_selectedFile NOTIFY selectedFileChanged)
 
     Q_INVOKABLE QCoro::QmlTask goTo(const QString& path);
     Q_INVOKABLE QCoro::QmlTask goBack();
@@ -75,7 +78,7 @@ public:
 signals:
     void currentPathChanged();
     void basePathChanged();
-
+    void selectedFileChanged();
 private:
     ADBClient* m_adbClient;
     QString m_basePath = "/";
@@ -85,6 +88,8 @@ private:
 
     QStringList m_history{};
     int m_historyIndex = -1;
+
+    QString m_selectedFile;
 
     QCoro::Task<void> updateFolder();
 };
