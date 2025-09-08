@@ -25,6 +25,13 @@
 #include <sys/stat.h>
 
 ADBFolderModel::ADBFolderModel() {
+    connect(this, &ADBFolderModel::basePathChanged, this, [this]() {
+        m_history.clear();
+        m_historyIndex = -1;
+
+        m_currentPath.clear();
+        emit currentPathChanged();
+    });
 }
 
 QHash<int, QByteArray> ADBFolderModel::roleNames() const {
@@ -171,17 +178,52 @@ QString ADBFolderModel::fileSize(qint64 size) const
     return ret;
 }
 
-QCoro::Task<void> ADBFolderModel::goToInternal(const QString& path) {
+QCoro::QmlTask ADBFolderModel::goTo(const QString& path) {
     if(path != m_currentPath) {
+        if(m_historyIndex < (int)m_history.size() - 1) {
+            m_history.erase(m_history.begin() + m_historyIndex + 1, m_history.end());
+        }
+        m_history.push_back(path);
+        m_historyIndex++;
+
         m_currentPath = path;
         emit currentPathChanged();
     }
+    return updateFolder();
+}
+
+QCoro::Task<void> nothing() {
+    co_return;
+}
+
+QCoro::QmlTask ADBFolderModel::goBack() {
+    if(canGoBack()) {
+        m_historyIndex--;
+        m_currentPath = m_history.at(m_historyIndex);
+        emit currentPathChanged();
+
+        return updateFolder();
+    }
+    return nothing();
+}
+QCoro::QmlTask ADBFolderModel::goForward() {
+    if(canGoForward()) {
+        m_historyIndex++;
+        m_currentPath = m_history.at(m_historyIndex);
+        emit currentPathChanged();
+
+        return updateFolder();
+    }
+    return nothing();
+}
+
+QCoro::Task<void> ADBFolderModel::updateFolder() {
     if(!m_adbClient) {
         co_return;
     }
 
     beginResetModel();
-    m_entries = co_await m_adbClient->co_listFiles(m_basePath + "/" + path);
+    m_entries = co_await m_adbClient->co_listFiles(m_basePath + "/" + m_currentPath);
     m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(), [](const ADBFileEntry& entry) -> bool {
         return entry.fileName == "." || entry.fileName == "..";
     }), m_entries.end());

@@ -53,9 +53,12 @@ public:
     Q_PROPERTY(QString basePath MEMBER m_basePath NOTIFY basePathChanged)
     Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentPathChanged)
 
-    Q_INVOKABLE QCoro::QmlTask goTo(const QString& path) {
-        return goToInternal(path);
-    }
+    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY currentPathChanged)
+    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY currentPathChanged)
+
+    Q_INVOKABLE QCoro::QmlTask goTo(const QString& path);
+    Q_INVOKABLE QCoro::QmlTask goBack();
+    Q_INVOKABLE QCoro::QmlTask goForward();
 
     const QString& currentPath() const { return m_currentPath; }
 
@@ -66,6 +69,9 @@ public:
     QMimeType mimeType(const ADBFileEntry& entry) const;
     QString iconName(const ADBFileEntry& entry) const;
     QString fileSize(qint64 size) const;
+
+    bool canGoBack() const { return m_historyIndex > 0; }
+    bool canGoForward() const { return m_historyIndex < (m_history.size()-1); }
 signals:
     void currentPathChanged();
     void basePathChanged();
@@ -77,7 +83,10 @@ private:
     QString m_currentPath = "";
     std::vector<ADBFileEntry> m_entries{};
 
-    QCoro::Task<void> goToInternal(const QString& path);
+    QStringList m_history{};
+    int m_historyIndex = -1;
+
+    QCoro::Task<void> updateFolder();
 };
 
 #endif

@@ -103,6 +103,23 @@ MainView {
         }
     }
 
+    ActionContext {
+        Action {
+            id: actionGoBack
+            text: i18n.tr("Go back")
+            iconName: "back"
+            onTriggered: model.goBack()
+            enabled: model.canGoBack
+        }
+        Action {
+            id: actionGoForward
+            text: i18n.tr("Go forward")
+            iconName: "go-next"
+            onTriggered: model.goForward()
+            enabled: model.canGoForward
+        }
+    }
+
     Component {
         id: folderListView
 
@@ -129,6 +146,8 @@ MainView {
                 header: PathHistoryToolbar {
                     id: header
                     folderModel: model
+
+                    leadingActionBar.actions: [ actionGoForward, actionGoBack ]
                 }
 
                 FolderListView {
