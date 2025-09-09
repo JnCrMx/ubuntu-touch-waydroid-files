@@ -21,6 +21,7 @@
 #include <QQuickView>
 
 #include "patharrowbackground.h"
+#include "snaphelper.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
     qDebug() << "Starting app from main.cpp";
 
     qmlRegisterType<PathArrowBackground>("waydroidfiles.jcm", 1, 0, "PathArrowBackground");
+    qmlRegisterSingletonType<SnapHelper>("waydroidfiles.jcm", 1, 0, "SnapHelper", [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject* {return new SnapHelper;});
 
     QQuickView *view = new QQuickView();
     view->setSource(QUrl("qrc:/Main.qml"));

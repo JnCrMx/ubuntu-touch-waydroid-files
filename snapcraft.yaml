@@ -25,6 +25,8 @@ apps:
       - wayland
       - x11
       - network
+      - desktop
+      - desktop-legacy
 
 plugs:
   lomiri-ui-toolkit:

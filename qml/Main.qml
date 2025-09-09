@@ -22,6 +22,7 @@ import Qt.labs.settings 1.0
 import Lomiri.Content 1.3
 
 import ADB 1.0
+import waydroidfiles.jcm 1.0
 
 import "views"
 import "ui"
@@ -65,7 +66,6 @@ MainView {
     function startTransfer(activeTransfer, importMode) {
         root.activeTransfer = activeTransfer
         root.mode = importMode ? "import" : "export"
-        console.log("Starting transfer in mode " + root.mode + ": " + JSON.stringify(activeTransfer))
     }
     function finishTransfer() {
         root.mode = "normal"
@@ -99,6 +99,19 @@ MainView {
             root.activeTransfer.state = ContentTransfer.Charged;
         })
     }
+    function exportFileSnap(path) {
+        console.log("Exporting file", path, "in snap mode")
+
+        client.pullFile(path).then(function(url) {
+            if(!url) {
+                console.log("Pull failed, aborting transfer");
+                return;
+            }
+            console.log("Pulled file to " + url);
+            SnapHelper.saveFileDialog(url, true)
+        })
+    }
+
     function importFile(path) {
         console.log("Importing file to ", path)
         let hostUrl = root.activeTransfer.items.length > 0 ? root.activeTransfer.items[0].url : null
@@ -220,6 +233,11 @@ MainView {
 
             function openFile(path) {
                 console.log("Opening file", path, "in mode", mode)
+                if(SnapHelper.isSnap) {
+                    exportFileSnap(path)
+                    return
+                }
+
                 if(mode === "normal") {
                     pageStack.push(Qt.resolvedUrl("content-hub/FileOpener.qml"), {
                         adbClient: client,

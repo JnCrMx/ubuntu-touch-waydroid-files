@@ -3,20 +3,22 @@ project(waydroid-files C CXX)
 
 # Automatically create moc files
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++23")
 
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickControls2 REQUIRED)
+find_package(Qt5Widgets REQUIRED)
 
-find_package(QCoro5 COMPONENTS Core Network Qml QUIET)
+find_package(QCoro5 COMPONENTS Core Network DBus Qml QUIET)
 if(NOT QCoro5_FOUND)
     message(STATUS "QCoro5 not found, building it as a submodule")
     set(QCORO_BUILD_EXAMPLES OFF)
     set(QCORO_BUILD_TESTING OFF)
     set(BUILD_SHARED_LIBS OFF)
     set(USE_QT_VERSION 5)
-    set(QCORO_WITH_QTDBUS OFF)
+    set(QCORO_WITH_QTDBUS ON)
     set(QCORO_WITH_QTNETWORK ON)
     set(QCORO_WITH_QTWEBSOCKETS OFF)
     add_subdirectory(libs/qcoro)
@@ -87,10 +89,12 @@ qt5_add_resources(QT_RESOURCES assets/assets.qrc)
 set(APP_SOURCES
     src/main.cpp
     src/patharrowbackground.cpp
+    src/snaphelper.cpp
 )
 add_executable(${PROJECT_NAME} ${APP_SOURCES} ${QT_RESOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS_RELEASE -s)
-target_link_libraries(${PROJECT_NAME} Qt5::Gui Qt5::Qml Qt5::Quick Qt5::QuickControls2)
+target_link_libraries(${PROJECT_NAME} Qt5::Gui Qt5::Qml Qt5::Quick Qt5::QuickControls2 Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} QCoro5::Core QCoro5::DBus QCoro5::Qml)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 # Translations
