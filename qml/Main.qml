@@ -30,7 +30,7 @@ import "ui"
 MainView {
     id: root
     objectName: 'mainView'
-    applicationName: "waydroid-files.jcm"
+    applicationName: SnapHelper.isSnap ? i18n.tr('ADB File Explorer') : "waydroid-files.jcm"
     automaticOrientation: true
 
     width: units.gu(45)
@@ -166,7 +166,7 @@ MainView {
 
             header: PageHeader {
                 id: header
-                title: i18n.tr('Waydroid Files')
+                title: SnapHelper.isSnap ? i18n.tr('ADB File Explorer') : i18n.tr('Waydroid Files')
             }
             ActivityIndicator {
                 anchors.centerIn: parent
@@ -223,6 +223,16 @@ MainView {
                 }
             }
         }
+        Action {
+            id: actionCreateFolder
+            iconName: "folder-symbolic"
+            text: i18n.tr("Create new folder")
+        }
+        Action {
+            id: actionUploadFile
+            iconName: "add"
+            text: i18n.tr("Upload new file")
+        }
     }
 
     Component {
@@ -267,7 +277,7 @@ MainView {
                     folderModel: model
 
                     leadingActionBar.actions: [ actionGoForward, actionGoBack ]
-                    trailingActionBar.actions: root.mode === "normal" ? [] : [ actionCancel, actionSelect ]
+                    trailingActionBar.actions: root.mode === "normal" ? [actionUploadFile, actionCreateFolder] : [actionCancel, actionSelect, actionCreateFolder]
                 }
 
                 FolderListView {

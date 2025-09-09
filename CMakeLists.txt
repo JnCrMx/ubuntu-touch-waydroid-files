@@ -34,9 +34,11 @@ execute_process(
 set(QT_IMPORTS_DIR "lib/${ARCH_TRIPLET}")
 
 set(PROJECT_NAME "waydroid-files")
+set(ALTERNATIVE_PROJECT_NAME "adb-file-explorer")
 set(FULL_PROJECT_NAME "waydroid-files.jcm")
 set(DATA_DIR /)
 set(DESKTOP_FILE_NAME ${PROJECT_NAME}.desktop)
+set(ALTERNATIVE_DESKTOP_FILE_NAME ${ALTERNATIVE_PROJECT_NAME}.desktop)
 set(CONTENT_HUB_JSON ${PROJECT_NAME}-contenthub.json)
 
 # This command figures out the minimum SDK framework for use in the manifest
@@ -44,7 +46,7 @@ set(CONTENT_HUB_JSON ${PROJECT_NAME}-contenthub.json)
 if(DEFINED ENV{SDK_FRAMEWORK})
     set(CLICK_FRAMEWORK "$ENV{SDK_FRAMEWORK}")
 else()
-    set(CLICK_FRAMEWORK "ubuntu-sdk-20.04")
+    set(CLICK_FRAMEWORK "ubuntu-touch-24.04-1.x")
 endif()
 
 # This figures out the target architecture for use in the manifest file.
@@ -83,6 +85,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/manifest.json DESTINATION ${CMAKE_INST
 install(FILES ${CONTENT_HUB_JSON} DESTINATION ${DATA_DIR})
 install(FILES ${PROJECT_NAME}.apparmor DESTINATION ${DATA_DIR})
 install(FILES assets/logo.svg DESTINATION assets)
+install(FILES assets/logo-snap.svg DESTINATION assets)
 
 qt5_add_resources(QT_RESOURCES qml/qml.qrc)
 qt5_add_resources(QT_RESOURCES assets/assets.qrc)
@@ -99,7 +102,7 @@ install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 # Translations
 file(GLOB_RECURSE I18N_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/po qml/*.qml qml/*.js)
-list(APPEND I18N_SRC_FILES ${DESKTOP_FILE_NAME}.in.h)
+list(APPEND I18N_SRC_FILES ${DESKTOP_FILE_NAME}.in.h ${ALTERNATIVE_DESKTOP_FILE_NAME}.in.h)
 
 find_program(INTLTOOL_MERGE intltool-merge)
 if(NOT INTLTOOL_MERGE)
@@ -115,8 +118,14 @@ add_custom_target(${DESKTOP_FILE_NAME} ALL
     COMMAND LC_ALL=C ${INTLTOOL_MERGE} -d -u ${CMAKE_SOURCE_DIR}/po ${CMAKE_SOURCE_DIR}/${DESKTOP_FILE_NAME}.in ${DESKTOP_FILE_NAME}
     COMMAND sed -i 's/${PROJECT_NAME}-//g' ${CMAKE_CURRENT_BINARY_DIR}/${DESKTOP_FILE_NAME}
 )
+add_custom_target(${ALTERNATIVE_DESKTOP_FILE_NAME} ALL
+    COMMENT "Merging translations into ${DESKTOP_FILE_NAME}..."
+    COMMAND LC_ALL=C ${INTLTOOL_MERGE} -d -u ${CMAKE_SOURCE_DIR}/po ${CMAKE_SOURCE_DIR}/${ALTERNATIVE_DESKTOP_FILE_NAME}.in ${ALTERNATIVE_DESKTOP_FILE_NAME}
+    COMMAND sed -i 's/${PROJECT_NAME}-//g' ${CMAKE_CURRENT_BINARY_DIR}/${ALTERNATIVE_DESKTOP_FILE_NAME}
+)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${DESKTOP_FILE_NAME} DESTINATION ${DATA_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${ALTERNATIVE_DESKTOP_FILE_NAME} DESTINATION ${DATA_DIR})
 
 add_subdirectory(po)
 add_subdirectory(plugins)

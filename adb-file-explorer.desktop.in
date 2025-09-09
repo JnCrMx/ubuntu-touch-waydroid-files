@@ -1,0 +1,7 @@
+[Desktop Entry]
+_Name=ADB File Explorer
+Exec=waydroid-files %U
+Icon=assets/logo-snap.svg
+Terminal=false
+Type=Application
+X-Lomiri-Touch=true

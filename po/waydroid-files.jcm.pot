@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: waydroid-files.jcm\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-08 16:20+0000\n"
+"POT-Creation-Date: 2025-09-09 19:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,36 +17,48 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../qml/Main.qml:47
+#: ../qml/Main.qml:33 ../qml/Main.qml:169 adb-file-explorer.desktop.in.h:1
+msgid "ADB File Explorer"
+msgstr ""
+
+#: ../qml/Main.qml:48
 msgid "Locating home folder..."
 msgstr ""
 
-#: ../qml/Main.qml:50
+#: ../qml/Main.qml:51
 msgid "Opening folder %1..."
 msgstr ""
 
-#: ../qml/Main.qml:156 waydroid-files.desktop.in.h:1
+#: ../qml/Main.qml:169 waydroid-files.desktop.in.h:1
 msgid "Waydroid Files"
 msgstr ""
 
-#: ../qml/Main.qml:167
+#: ../qml/Main.qml:180
 msgid "Waiting for device..."
 msgstr ""
 
-#: ../qml/Main.qml:175
+#: ../qml/Main.qml:188
 msgid "Go back"
 msgstr ""
 
-#: ../qml/Main.qml:182
+#: ../qml/Main.qml:195
 msgid "Go forward"
 msgstr ""
 
-#: ../qml/Main.qml:190
+#: ../qml/Main.qml:203
 msgid "Cancel"
 msgstr ""
 
-#: ../qml/Main.qml:200
+#: ../qml/Main.qml:213
 msgid "Select"
+msgstr ""
+
+#: ../qml/Main.qml:229
+msgid "Create new folder"
+msgstr ""
+
+#: ../qml/Main.qml:234
+msgid "Upload new file"
 msgstr ""
 
 #: ../qml/content-hub/FileOpener.qml:31

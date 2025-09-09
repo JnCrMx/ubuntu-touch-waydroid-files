@@ -1,8 +1,8 @@
-name: waydroid-files
+name: adb-file-explorer
 version: 0.1
 base: core24
-summary: Waydroid Files
-description: Easily access your Waydroid files!
+summary: ADB File Explorer
+description: Access the files of your Android device via ADB in a simple way.
 confinement: strict
 grade: stable
 
@@ -12,8 +12,8 @@ platforms:
   armhf:
 
 apps:
-  waydroid-files:
-    desktop: waydroid-files.desktop
+  adb-file-explorer:
+    desktop: adb-file-explorer.desktop
 
     command: waydroid-files
 

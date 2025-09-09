@@ -10,6 +10,8 @@ add_custom_target(${POT_FILE} ALL
     COMMENT "Generating translation template"
     COMMAND ${INTLTOOL_EXTRACT} --update --type=gettext/ini
         --srcdir=${CMAKE_SOURCE_DIR} ${DESKTOP_FILE_NAME}.in
+    COMMAND ${INTLTOOL_EXTRACT} --update --type=gettext/ini
+        --srcdir=${CMAKE_SOURCE_DIR} ${ALTERNATIVE_DESKTOP_FILE_NAME}.in
 
     COMMAND ${GETTEXT_XGETTEXT_EXECUTABLE} -o ${POT_FILE}
         -D ${CMAKE_CURRENT_SOURCE_DIR}
