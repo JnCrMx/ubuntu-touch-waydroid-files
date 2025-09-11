@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/assets">
         <file>logo.svg</file>
+        <file>logo-snap.svg</file>
     </qresource>
 </RCC>
