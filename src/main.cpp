@@ -19,6 +19,7 @@
 #include <QUrl>
 #include <QString>
 #include <QQuickView>
+#include <QQmlEngine>
 
 #include "patharrowbackground.h"
 #include "snaphelper.h"
@@ -37,6 +38,8 @@ int main(int argc, char *argv[])
     view->setSource(QUrl("qrc:/Main.qml"));
     view->setResizeMode(QQuickView::SizeRootObjectToView);
     view->show();
+
+    app->connect(view->engine(), &QQmlEngine::quit, app, &QCoreApplication::quit);
 
     return app->exec();
 }
