@@ -2,6 +2,9 @@
 
 Easily access your Waydroid files!
 
+[![OpenStore](https://next.open-store.io/badges/en_US.png)](https://next.open-store.io/app/waydroid-files.jcm/)
+[![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/adb-file-explorer)
+
 ## License
 
 Copyright (C) 2025  JCM
